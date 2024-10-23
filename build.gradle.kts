@@ -8,7 +8,7 @@ group = "com.hivemq.extensions"
 description = "HiveMQ 4 Hello Proxy Extension"
 
 hivemqExtension {
-    name = "Hello Prox< Extension"
+    name = "Hello Proxy Extension"
     author = "HiveMQ"
     priority = 10000
     startPriority = 10000

@@ -37,23 +37,42 @@ public class HelloProxyMain implements ExtensionMain {
             final @NotNull ExtensionStartOutput extensionStartOutput) {
 
         try {
+            // Fetch properties
+            final String proxyUser = System.getProperty("http.proxyUser");
+            final String proxyPassword = System.getProperty("http.proxyPassword");
 
-            final String userName = System.getProperty("http.proxyUser");
-            final char[] password = System.getProperty("http.proxyPassword").toCharArray();
+            // Check if either of the properties is missing and log an error
+            if (proxyUser == null || proxyUser.isEmpty()) {
+                log.error("Error: 'http.proxyUser' property is not set.");
+            }
 
-            Authenticator.setDefault(new Authenticator() {
-                @Override
-                protected PasswordAuthentication getPasswordAuthentication() {
-                    return new PasswordAuthentication(userName, password);
-                }
-            });
+            if (proxyPassword == null || proxyPassword.isEmpty()) {
+                log.error("Error: 'http.proxyPassword' property is not set.");
+            }
 
-            final ExtensionInformation extensionInformation = extensionStartInput.getExtensionInformation();
-            log.info("Started " + extensionInformation.getName() + ":" + extensionInformation.getVersion());
+            // Proceed only if both properties are present
+            if (proxyUser != null && proxyPassword != null) {
+                final char[] password = proxyPassword.toCharArray();
+
+                // Debugging: Print userName and password (be careful with password logging)
+                log.info("Debug - Proxy User: " + proxyUser);
+                log.info("Debug - Proxy Password: " + new String(password));
+
+                Authenticator.setDefault(new Authenticator() {
+                    @Override
+                    protected PasswordAuthentication getPasswordAuthentication() {
+                        return new PasswordAuthentication(proxyUser, password);
+                    }
+                });
+
+                final ExtensionInformation extensionInformation = extensionStartInput.getExtensionInformation();
+                log.info("Started " + extensionInformation.getName() + ":" + extensionInformation.getVersion());
+            }
 
         } catch (final Exception e) {
             log.error("Exception thrown at extension start: ", e);
         }
+
     }
 
     @Override
