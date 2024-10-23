@@ -13,28 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.hivemq.extensions.helloworld;
+package com.hivemq.extensions.helloproxy;
 
 import com.hivemq.extension.sdk.api.ExtensionMain;
 import com.hivemq.extension.sdk.api.annotations.NotNull;
-import com.hivemq.extension.sdk.api.events.EventRegistry;
 import com.hivemq.extension.sdk.api.parameter.*;
-import com.hivemq.extension.sdk.api.services.Services;
-import com.hivemq.extension.sdk.api.services.intializer.InitializerRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.net.Authenticator;
+import java.net.PasswordAuthentication;
 
 /**
- * This is the main class of the extension,
- * which is instantiated either during the HiveMQ start up process (if extension is enabled)
- * or when HiveMQ is already started by enabling the extension.
- *
- * @author Florian Limpöck
- * @since 4.0.0
+ * @author Dasha Samkova
+ * @since 4.33.1
  */
-public class HelloWorldMain implements ExtensionMain {
+public class HelloProxyMain implements ExtensionMain {
 
-    private static final @NotNull Logger log = LoggerFactory.getLogger(HelloWorldMain.class);
+    private static final @NotNull Logger log = LoggerFactory.getLogger(HelloProxyMain.class);
 
     @Override
     public void extensionStart(
@@ -42,8 +37,16 @@ public class HelloWorldMain implements ExtensionMain {
             final @NotNull ExtensionStartOutput extensionStartOutput) {
 
         try {
-            addClientLifecycleEventListener();
-            addPublishModifier();
+
+            final String userName = System.getProperty("http.proxyUser");
+            final char[] password = System.getProperty("http.proxyPassword").toCharArray();
+
+            Authenticator.setDefault(new Authenticator() {
+                @Override
+                protected PasswordAuthentication getPasswordAuthentication() {
+                    return new PasswordAuthentication(userName, password);
+                }
+            });
 
             final ExtensionInformation extensionInformation = extensionStartInput.getExtensionInformation();
             log.info("Started " + extensionInformation.getName() + ":" + extensionInformation.getVersion());
@@ -62,20 +65,5 @@ public class HelloWorldMain implements ExtensionMain {
         log.info("Stopped " + extensionInformation.getName() + ":" + extensionInformation.getVersion());
     }
 
-    private void addClientLifecycleEventListener() {
-        final EventRegistry eventRegistry = Services.eventRegistry();
 
-        final HelloWorldListener helloWorldListener = new HelloWorldListener();
-
-        eventRegistry.setClientLifecycleEventListener(input -> helloWorldListener);
-    }
-
-    private void addPublishModifier() {
-        final InitializerRegistry initializerRegistry = Services.initializerRegistry();
-
-        final HelloWorldInterceptor helloWorldInterceptor = new HelloWorldInterceptor();
-
-        initializerRegistry.setClientInitializer(
-                (initializerInput, clientContext) -> clientContext.addPublishInboundInterceptor(helloWorldInterceptor));
-    }
 }
